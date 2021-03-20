@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocation/geolocation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sms/sms.dart';
 
 class Dashboard extends StatefulWidget {
 
@@ -14,9 +19,12 @@ class Dashboard extends StatefulWidget {
 
   @override
   _DashboardState createState() => _DashboardState();
+  
 }
 
-  List texts=["Jay","Jones","Anet","etorma","jabla","alim"];
+  List texts=["Fire","Flood","Car","Stranded","Hostage","Others"];
+  
+  var name;
   
 class CustomWidget extends StatelessWidget {
   CustomWidget(this._index) {
@@ -26,6 +34,7 @@ class CustomWidget extends StatelessWidget {
 
   final int _index;
 
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -34,9 +43,46 @@ class CustomWidget extends StatelessWidget {
         color: (_index % 2 != 0) ? Colors.white : Colors.grey,
         child: Center(child: Text(texts.elementAt(_index), style: TextStyle(fontSize: 40))),
       ),
-      onTap: (){
+      onTap: () async {
         print(texts.elementAt(_index));
-      },
+        StreamSubscription<LocationResult> subscription = Geolocation.currentLocation(accuracy: LocationAccuracy.best).listen((result) async {
+              print(result.locations);
+              if(result.isSuccessful) {
+
+                double latitude = result.location.latitude;
+                double longitude = result.location.longitude;
+                
+                print("lat: " + latitude.toString());
+                print("long: " + longitude.toString());
+                
+                List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+
+                
+                  SmsSender sender = new SmsSender();
+                  String address = "09750458576";
+                  String formatMsg;
+
+                  formatMsg = "From: " + name + 
+                  "\nType: " + texts.elementAt(_index) +
+                  "\nLocation: " + placemarks.first.locality + 
+                  "\nLatitude: " + latitude.toString() + 
+                  "\nLongitude: " + longitude.toString() +
+                  "\nhttps://www.google.com/maps/search/"+latitude.toString()+","+longitude.toString();
+                  print(formatMsg);
+                  SmsMessage message = new SmsMessage(address, formatMsg);
+                  message.onStateChanged.listen((state) {
+                    if (state == SmsMessageState.Sent) {
+                      print("SMS is sent!");
+                    } else if (state == SmsMessageState.Delivered) {
+                      print("SMS is delivered!");
+                    }
+                  });
+                  sender.sendSms(message);
+              }
+        });
+
+
+      }
     );
   }
 }
@@ -44,7 +90,6 @@ class _DashboardState extends State<Dashboard> {
 
   
   SharedPreferences prefs ;
-  var name;
 
   _DashboardState() {
     _getName().then((value) => setState(() {
