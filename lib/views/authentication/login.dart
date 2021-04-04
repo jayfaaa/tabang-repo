@@ -67,12 +67,12 @@ class _LoginPageState extends State<LoginPage> {
     
             StreamSubscription<LocationResult> subscription = Geolocation.currentLocation(accuracy: LocationAccuracy.best).listen((result) async {
               print(result.locations);
-              if(result.isSuccessful) {
+              if(result.isSuccessful && result.location.longitude != 0.0 && result.location.latitude != 0.0) {
                 
                 prefs = await SharedPreferences.getInstance();
                 double latitude = result.location.latitude;
                 double longitude = result.location.longitude;
-                
+                  
                 print("lat: " + latitude.toString());
                 print("long: " + longitude.toString());
                 
@@ -110,14 +110,20 @@ class _LoginPageState extends State<LoginPage> {
                 //   print(first.toString());
                 // }
               } else {
-                print("cant");
+                print("cant get location");
+
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) =>_buildPopupDialog(context,"Can't get your location","Please turn on your GPS.","Try again!"));
+
               }
+
             });}).catchError((e) {
       // Location Services Enablind Cancelled
     });
 
           } else {
-            Navigator.pop(context);
+            Navigator.popUntil(context, ModalRoute.withName('/loginpage'));
           }
         },
         textColor: Theme.of(context).primaryColor,

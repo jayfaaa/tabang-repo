@@ -42,7 +42,8 @@ class _RegisterPageState extends State<RegisterPage> {
     actions: <Widget>[
       new FlatButton(
         onPressed: ()  {
-         (isShow) ? Navigator.pushReplacementNamed(context, '/loginpage') : Navigator.pop(context);
+          print(isShow);
+        //  (isShow) ? Navigator.pushReplacementNamed(context, '/loginpage') : Navigator.pop(context);
         },
         textColor: Theme.of(context).primaryColor,
         child: (isShow) ? const Text('Proceed to Login') : const Text('Try Again'),
